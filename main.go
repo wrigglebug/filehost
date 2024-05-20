@@ -38,6 +38,8 @@ var (
 )
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received %s request for URL: %s", r.Method, r.URL.Path)
+
 	err := r.ParseMultipartForm(2 << 30) // 2 GiB limit
 	if err != nil {
 		log.Printf("Error parsing multipart form: %v", err)
@@ -135,12 +137,21 @@ func generateRandomString(length int) string {
 	return string(b)
 }
 
+func logRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/uploaded/") && r.Method == http.MethodGet {
+			log.Printf("GET request to /uploaded/: %s", r.URL.Path)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	flag.StringVar(&hostname, "hostname", "http://localhost:8080", "The hostname for the URL in the response")
 	flag.Parse()
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
-	http.Handle("/uploaded/", http.StripPrefix("/uploaded/", http.FileServer(http.Dir(uploadDir))))
+	http.Handle("/uploaded/", logRequests(http.StripPrefix("/uploaded/", http.FileServer(http.Dir(uploadDir)))))
 	http.HandleFunc("/upload", uploadFile)
 
 	fmt.Println("Server started on port 8080")
