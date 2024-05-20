@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゆっくりしていってね！！！</title>
+    <!-- Include Dropzone CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #pageContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #uploadContainer {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="pageContainer">
+    <div id="uploadContainer">
+        <!-- Dropzone Form -->
+        <form action="/upload" class="dropzone" id="myDropzone"></form>
+        <div id="response"></div>
+    </div>
+</div>
+    <!-- Include Dropzone JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+    <script>
+        // Initialize Dropzone
+        Dropzone.options.myDropzone = {
+            maxFilesize: 2048, // 2 GiB in MiB
+            createImageThumbnails: true,
+            init: function() {
+                this.on("success", function(file, response) {
+                    const responseDiv = document.getElementById('response');
+                    response.forEach(file => {
+                        const a = document.createElement('a');
+                        a.textContent = file.url;
+                        a.href = file.url;
+                        a.target = "_blank"; // Open in a new tab
+                        const p = document.createElement('p');
+                        p.appendChild(a);
+                        responseDiv.appendChild(p);
+                    });
+                });
+                this.on("error", function(file, response) {
+                    const responseDiv = document.getElementById('response');
+                    const p = document.createElement('p');
+                    p.textContent = `Error: ${response}`;
+                    responseDiv.appendChild(p);
+                });
+            }
+        };
+    </script>
+</body>
+</html>
