@@ -25,6 +25,7 @@ type ErrorResponse struct {
 
 var (
 	hostname             string
+	port                 string
 	uploadDir            string = "./uploaded"
 	disallowedExtensions        = map[string]bool{
 		".exe":  true,
@@ -38,7 +39,7 @@ var (
 )
 
 func uploadFile(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received %s request for URL: %s", r.Method, r.URL.Path)
+	log.Printf("Received %s request from %s for URL: %s", r.Method, r.RemoteAddr, r.URL.Path)
 
 	err := r.ParseMultipartForm(2 << 30) // 2 GiB limit
 	if err != nil {
@@ -102,7 +103,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		url := fmt.Sprintf("%s/%s/%s", hostname, "uploaded", newFilename)
+		url := fmt.Sprintf("%s/files/uploaded/%s", hostname, newFilename)
 		response := UploadResponse{
 			Filename: newFilename,
 			URL:      url,
@@ -147,13 +148,15 @@ func logRequests(next http.Handler) http.Handler {
 }
 
 func main() {
-	flag.StringVar(&hostname, "hostname", "http://localhost:8080", "The hostname for the URL in the response")
+	flag.StringVar(&hostname, "hostname", "http://localhost", "The hostname for the URL in the response")
+	flag.StringVar(&port, "port", "8080", "The port number for the server")
 	flag.Parse()
 
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.Handle("/uploaded/", logRequests(http.StripPrefix("/uploaded/", http.FileServer(http.Dir(uploadDir)))))
 	http.HandleFunc("/upload", uploadFile)
 
-	fmt.Println("Server started on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	serverAddress := fmt.Sprintf(":%s", port)
+	fmt.Printf("Server started on %s\n", serverAddress)
+	log.Fatal(http.ListenAndServe(serverAddress, nil))
 }
